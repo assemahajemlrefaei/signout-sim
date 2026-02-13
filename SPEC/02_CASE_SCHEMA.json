@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CaseSeed",
+  "type": "object",
+  "required": ["cases"],
+  "properties": {
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "case_id",
+          "title",
+          "tags",
+          "difficulty",
+          "snapshot",
+          "hidden_truth"
+        ],
+        "properties": {
+          "case_id": { "type": "string" },
+          "title": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+          "snapshot": {
+            "type": "object",
+            "required": [
+              "one_liner",
+              "active_problems",
+              "vitals",
+              "labs",
+              "meds",
+              "pending",
+              "code_status"
+            ],
+            "properties": {
+              "one_liner": { "type": "string" },
+              "active_problems": { "type": "array", "items": { "type": "string" } },
+              "vitals": { "type": "object", "additionalProperties": true },
+              "labs": { "type": "object", "additionalProperties": true },
+              "meds": { "type": "array", "items": { "type": "string" } },
+              "pending": { "type": "array", "items": { "type": "string" } },
+              "code_status": { "type": "string" }
+            }
+          },
+          "hidden_truth": {
+            "type": "object",
+            "required": ["diagnosis", "pitfalls", "recommended_actions"],
+            "properties": {
+              "diagnosis": { "type": "string" },
+              "pitfalls": { "type": "array", "items": { "type": "string" } },
+              "recommended_actions": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        }
+      }
+    }
+  }
+}
