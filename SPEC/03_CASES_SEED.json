@@ -1,0 +1,86 @@
+{
+  "cases": [
+    {
+      "case_id": "case-001",
+      "title": "COPD Exacerbation with Hypercapnia",
+      "tags": ["pulmonary", "night-cover"],
+      "difficulty": "medium",
+      "snapshot": {
+        "one_liner": "67M with severe COPD admitted for worsening dyspnea and hypercapnia.",
+        "active_problems": [
+          "Acute on chronic hypercapnic respiratory failure",
+          "Possible community acquired pneumonia"
+        ],
+        "vitals": {
+          "HR": 108,
+          "BP": "146/82",
+          "RR": 24,
+          "SpO2": "90% on 2L NC",
+          "TempC": 37.8
+        },
+        "labs": {
+          "WBC": 13.1,
+          "HCO3": 34,
+          "pH": 7.31,
+          "pCO2": 66
+        },
+        "meds": [
+          "Prednisone 40 mg daily",
+          "Ceftriaxone 1 g daily",
+          "Azithromycin 500 mg daily",
+          "Duoneb q4h"
+        ],
+        "pending": ["Repeat VBG at 22:00", "Follow sputum culture"],
+        "code_status": "Full Code"
+      },
+      "hidden_truth": {
+        "diagnosis": "COPD exacerbation with CO2 retention requiring NIV escalation if worsened.",
+        "pitfalls": [
+          "Over-oxygenation can worsen hypercapnia",
+          "Delaying NIV initiation overnight"
+        ],
+        "recommended_actions": [
+          "Target O2 sat 88-92%",
+          "Escalate to BiPAP if worsening mental status or gas exchange"
+        ]
+      }
+    },
+    {
+      "case_id": "case-002",
+      "title": "Septic Shock from Pyelonephritis",
+      "tags": ["id", "icu-triage"],
+      "difficulty": "hard",
+      "snapshot": {
+        "one_liner": "54F with diabetes presenting with fever, flank pain, and hypotension.",
+        "active_problems": ["Septic shock", "Acute kidney injury", "Lactic acidosis"],
+        "vitals": {
+          "HR": 124,
+          "BP": "84/48",
+          "RR": 28,
+          "SpO2": "95% RA",
+          "TempC": 39.2
+        },
+        "labs": {
+          "WBC": 19.4,
+          "Lactate": 4.9,
+          "Cr": 2.1,
+          "UA": "nitrite+ leukocyte esterase+"
+        },
+        "meds": ["Piperacillin-tazobactam", "Norepinephrine infusion"],
+        "pending": ["Blood cultures", "Urine culture", "CT abdomen/pelvis"],
+        "code_status": "Full Code"
+      },
+      "hidden_truth": {
+        "diagnosis": "Obstructive pyelonephritis with source control needed.",
+        "pitfalls": [
+          "Not arranging urgent urology consult",
+          "Inadequate fluid resuscitation before vasopressors"
+        ],
+        "recommended_actions": [
+          "Urgent decompression if obstruction present",
+          "Trend lactate and urine output"
+        ]
+      }
+    }
+  ]
+}
