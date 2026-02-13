@@ -13,15 +13,14 @@ IllnessSeverity = Literal["Stable", "Watcher", "Unstable"]
 
 
 class SignoutBase(BaseModel):
-    patient_name: str
-    author_id: str
-    summary: str
-    illness_severity: IllnessSeverity | None = None
-    patient_summary: str = ""
+    case_id: str
+    illness_severity: IllnessSeverity
+    patient_summary: str
     action_list: list[str] = Field(default_factory=list)
     situational_awareness: list[str] = Field(default_factory=list)
     contingency_plans: list[str] = Field(default_factory=list)
-    receiver_synthesis: str = ""
+    receiver_synthesis: str
+    free_text: str | None = None
 
 
 class SignoutCreate(SignoutBase):
@@ -29,15 +28,14 @@ class SignoutCreate(SignoutBase):
 
 
 class SignoutUpdate(BaseModel):
-    patient_name: str | None = None
-    author_id: str | None = None
-    summary: str | None = None
+    case_id: str | None = None
     illness_severity: IllnessSeverity | None = None
     patient_summary: str | None = None
     action_list: list[str] | None = None
     situational_awareness: list[str] | None = None
     contingency_plans: list[str] | None = None
     receiver_synthesis: str | None = None
+    free_text: str | None = None
 
 
 class Signout(SignoutBase):
@@ -89,8 +87,7 @@ def _score_list_domain(
     else:
         improvements.append(f"Add at least 2 {domain_label} items for better coverage.")
 
-    joined = " ".join(items)
-    if _has_keyword(joined, TIME_THRESHOLD_KEYWORDS):
+    if _has_keyword(" ".join(items), TIME_THRESHOLD_KEYWORDS):
         score += 1
         strengths.append(f"{domain_label} includes a trigger/threshold cue.")
     else:
@@ -115,11 +112,8 @@ def score_signout(signout: Signout) -> RubricScore:
     if signout.illness_severity in ("Stable", "Watcher", "Unstable"):
         subscores["illness_severity"] = 2
         strengths.append("Illness severity is clearly classified.")
-    else:
-        improvements.append("Set illness severity as Stable, Watcher, or Unstable.")
-        missing_critical.append("illness_severity is missing")
 
-    summary_text = signout.patient_summary.strip() or signout.summary.strip()
+    summary_text = signout.patient_summary.strip()
     if summary_text:
         summary_score = 1
         if _has_keyword(summary_text, DX_KEYWORDS):
@@ -176,14 +170,12 @@ def score_signout(signout: Signout) -> RubricScore:
         improvements.append("Add receiver synthesis (e.g., I will monitor/reassess/call).")
         missing_critical.append("receiver_synthesis is missing")
 
-    total_score = sum(subscores.values())
-
     return RubricScore(
         strengths=strengths,
         improvements=improvements,
         missing_critical=missing_critical,
         subscores=subscores,
-        total_score=total_score,
+        total_score=sum(subscores.values()),
         rubric_version="v0.1",
     )
 
@@ -227,9 +219,9 @@ def update_signout(signout_id: str, payload: SignoutUpdate) -> Signout:
     if signout is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Signout not found")
 
-    updated = signout.model_copy(update=payload.model_dump(exclude_unset=True))
-    SIGNOUTS[signout_id] = updated
-    return updated
+    updated_signout = signout.model_copy(update=payload.model_dump(exclude_unset=True))
+    SIGNOUTS[signout_id] = updated_signout
+    return updated_signout
 
 
 @app.post("/api/signouts/{signout_id}/score", response_model=RubricScore)

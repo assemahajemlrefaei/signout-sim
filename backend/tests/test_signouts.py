@@ -12,15 +12,14 @@ def setup_function() -> None:
 
 def _create_signout(overrides: dict | None = None) -> dict:
     payload = {
-        "patient_name": "Jane Doe",
-        "author_id": "resident-1",
-        "summary": "Dx: pneumonia, stable on IV antibiotics and oxygen",
+        "case_id": "case-001",
         "illness_severity": "Watcher",
-        "patient_summary": "Dx pneumonia, stable respiratory status, on IV antibiotics and O2",
+        "patient_summary": "Dx pneumonia, stable respiratory status, on IV antibiotics and O2.",
         "action_list": ["Check temp at 02:00", "Call if SBP<90"],
         "situational_awareness": ["If worsening O2 needs, call senior", "Monitor HR trend"],
         "contingency_plans": ["If fever persists, reculture", "Call rapid response for BP drop"],
         "receiver_synthesis": "I will monitor vitals and reassess; I'll call if worsening.",
+        "free_text": "Family update requested.",
     }
     if overrides:
         payload.update(overrides)
@@ -57,8 +56,8 @@ def test_get_signout_rejects_unknown_view() -> None:
 
 
 def test_list_signouts_supports_query_pagination() -> None:
-    first = _create_signout({"patient_name": "First"})
-    second = _create_signout({"patient_name": "Second"})
+    first = _create_signout({"case_id": "case-001"})
+    second = _create_signout({"case_id": "case-002"})
 
     response = client.get("/api/signouts?limit=1&offset=1")
 
@@ -88,16 +87,16 @@ def test_score_returns_expected_keys_and_rubric_version() -> None:
 def test_weak_signout_scores_lower_than_strong_signout() -> None:
     weak = _create_signout(
         {
-            "summary": "follow up",
-            "illness_severity": "Stable",
+            "case_id": "weak-case",
             "patient_summary": "",
             "action_list": [],
             "situational_awareness": [],
             "contingency_plans": [],
             "receiver_synthesis": "",
+            "free_text": None,
         }
     )
-    strong = _create_signout({"patient_name": "Strong Patient"})
+    strong = _create_signout({"case_id": "strong-case"})
 
     weak_score = client.post(f"/api/signouts/{weak['signout_id']}/score").json()["total_score"]
     strong_score = client.post(f"/api/signouts/{strong['signout_id']}/score").json()["total_score"]

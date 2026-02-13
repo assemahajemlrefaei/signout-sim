@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { clientApiBaseUrl } from "../../../utils/api";
+
 type RubricScore = {
   strengths: string[];
   improvements: string[];
@@ -10,8 +12,6 @@ type RubricScore = {
   total_score: number;
   rubric_version: string;
 };
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
 
 export default function SignoutScorePage({ params }: { params: { signout_id: string } }) {
   const [score, setScore] = useState<RubricScore | null>(null);
@@ -23,18 +23,18 @@ export default function SignoutScorePage({ params }: { params: { signout_id: str
     setError(null);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/signouts/${params.signout_id}/score`, {
+      const response = await fetch(`${clientApiBaseUrl}/api/signouts/${params.signout_id}/score`, {
         method: "POST"
       });
+
       if (!response.ok) {
         throw new Error(`Unable to score signout (status ${response.status}).`);
       }
-      const payload = (await response.json()) as RubricScore;
-      setScore(payload);
+
+      setScore((await response.json()) as RubricScore);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      setError(message);
       setScore(null);
+      setError(err instanceof Error ? err.message : "Unknown error");
     } finally {
       setLoading(false);
     }
@@ -44,6 +44,7 @@ export default function SignoutScorePage({ params }: { params: { signout_id: str
     <main style={{ fontFamily: "sans-serif", padding: "2rem" }}>
       <h1>Signout scoring</h1>
       <p>Signout ID: {params.signout_id}</p>
+
       <button onClick={handleScore} disabled={loading}>
         {loading ? "Scoring..." : "Score this signout"}
       </button>
