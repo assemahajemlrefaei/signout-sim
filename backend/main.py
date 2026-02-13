@@ -23,17 +23,24 @@ class SignoutBase(BaseModel):
     free_text: str | None = None
 
 
-class SignoutCreate(SignoutBase):
-    pass
+class SignoutCreate(BaseModel):
+    case_id: str
+    illness_severity: IllnessSeverity
+    patient_summary: str
+    action_list: list[str] | str = Field(default_factory=list)
+    situational_awareness: list[str] | str = Field(default_factory=list)
+    contingency_plans: list[str] | str = Field(default_factory=list)
+    receiver_synthesis: str
+    free_text: str | None = None
 
 
 class SignoutUpdate(BaseModel):
     case_id: str | None = None
     illness_severity: IllnessSeverity | None = None
     patient_summary: str | None = None
-    action_list: list[str] | None = None
-    situational_awareness: list[str] | None = None
-    contingency_plans: list[str] | None = None
+    action_list: list[str] | str | None = None
+    situational_awareness: list[str] | str | None = None
+    contingency_plans: list[str] | str | None = None
     receiver_synthesis: str | None = None
     free_text: str | None = None
 
@@ -58,13 +65,32 @@ SIGNOUTS: dict[str, Signout] = {}
 TIME_THRESHOLD_KEYWORDS = ["if", "call", "worsening", "sbp<", "o2", "temp", "hr", "bp"]
 DX_KEYWORDS = ["dx", "diagnosis", "pna", "pneumonia", "sepsis", "chf", "copd", "uti"]
 STATUS_KEYWORDS = ["stable", "improving", "worsening", "critical", "unchanged", "watcher"]
-TREATMENT_KEYWORDS = ["on", "started", "continue", "iv", "abx", "antibiotic", "drip", "oxygen"]
+TREATMENT_KEYWORDS = ["started", "continue", "iv", "abx", "antibiotic", "drip", "oxygen"]
 RECEIVER_PLAN_KEYWORDS = ["i will", "i'll", "monitor", "check", "reassess", "call"]
 
 
 def _has_keyword(text: str, keywords: list[str]) -> bool:
     lowered = text.lower()
     return any(keyword in lowered for keyword in keywords)
+
+
+def _normalize_text_list(value: list[str] | str | None) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, str):
+        return [line.strip() for line in value.splitlines() if line.strip()]
+    return [item.strip() for item in value if item and item.strip()]
+
+
+def _normalized_signout_data(payload: SignoutCreate | SignoutUpdate) -> dict:
+    data = payload.model_dump(exclude_unset=True)
+    if "action_list" in data:
+        data["action_list"] = _normalize_text_list(data["action_list"])
+    if "situational_awareness" in data:
+        data["situational_awareness"] = _normalize_text_list(data["situational_awareness"])
+    if "contingency_plans" in data:
+        data["contingency_plans"] = _normalize_text_list(data["contingency_plans"])
+    return data
 
 
 def _score_list_domain(
@@ -187,7 +213,8 @@ def health() -> HealthResponse:
 
 @app.post("/api/signouts", response_model=Signout, status_code=status.HTTP_201_CREATED)
 def create_signout(payload: SignoutCreate) -> Signout:
-    signout = Signout(signout_id=str(uuid4()), **payload.model_dump())
+    normalized_data = _normalized_signout_data(payload)
+    signout = Signout(signout_id=str(uuid4()), **normalized_data)
     SIGNOUTS[signout.signout_id] = signout
     return signout
 
@@ -219,7 +246,8 @@ def update_signout(signout_id: str, payload: SignoutUpdate) -> Signout:
     if signout is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Signout not found")
 
-    updated_signout = signout.model_copy(update=payload.model_dump(exclude_unset=True))
+    normalized_update = _normalized_signout_data(payload)
+    updated_signout = signout.model_copy(update=normalized_update)
     SIGNOUTS[signout_id] = updated_signout
     return updated_signout
 

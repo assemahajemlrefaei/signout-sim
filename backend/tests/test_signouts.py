@@ -66,6 +66,28 @@ def test_list_signouts_supports_query_pagination() -> None:
     assert response.json() != [first]
 
 
+
+def test_create_signout_normalizes_newline_text_to_lists() -> None:
+    response = client.post(
+        "/api/signouts",
+        json={
+            "case_id": "case-text-lists",
+            "illness_severity": "Stable",
+            "patient_summary": "Dx UTI, improving, continue antibiotics",
+            "action_list": "Check AM labs\nCall if BP low\n",
+            "situational_awareness": "If worsening fever, escalate\n",
+            "contingency_plans": "If hypotensive, give bolus\nCall senior",
+            "receiver_synthesis": "I will monitor and call with changes.",
+            "free_text": None,
+        },
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["action_list"] == ["Check AM labs", "Call if BP low"]
+    assert payload["situational_awareness"] == ["If worsening fever, escalate"]
+    assert payload["contingency_plans"] == ["If hypotensive, give bolus", "Call senior"]
+
 def test_score_returns_expected_keys_and_rubric_version() -> None:
     signout = _create_signout()
 
